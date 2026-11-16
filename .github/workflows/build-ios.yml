@@ -1,0 +1,105 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Pilih target output build iOS'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - simulator
+          - device-ipa
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v5
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 📦 Install Node Dependencies
+        run: npm ci
+
+      - name: ⚙️ Generate iOS Native Project (Expo Prebuild)
+        run: npx expo prebuild --platform ios --clean --no-install
+
+      - name: 🍏 Install CocoaPods Dependencies
+        run: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: 🔍 Resolve Xcode Workspace & Scheme
+        run: |
+          WORKSPACE=$(find ios -maxdepth 1 -name "*.xcworkspace" | head -n 1)
+          SCHEME=$(xcodebuild -list -workspace "$WORKSPACE" -json | jq -r '.workspace.schemes[0]')
+          echo "WORKSPACE=$WORKSPACE" >> $GITHUB_ENV
+          echo "SCHEME=$SCHEME" >> $GITHUB_ENV
+          echo "Workspace yang ditemukan: $WORKSPACE"
+          echo "Scheme yang ditemukan: $SCHEME"
+
+      - name: 📱 Build iOS Simulator (.app.zip)
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_target == 'simulator' || github.event.inputs.build_target == 'both' }}
+        run: |
+          echo "🔨 Memulai build untuk iOS Simulator..."
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+          mkdir -p artifacts
+          cd ios/build-sim/Build/Products/Release-iphonesimulator
+          APP_NAME=$(find . -maxdepth 1 -name "*.app" | head -n 1)
+          zip -r "$GITHUB_WORKSPACE/artifacts/bclinnk-cm-simulator.zip" "$APP_NAME"
+          cd "$GITHUB_WORKSPACE"
+          echo "✅ Simulator build selesai: artifacts/bclinnk-cm-simulator.zip"
+
+      - name: 📲 Build iOS Device Unsigned IPA (.ipa)
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_target == 'device-ipa' || github.event.inputs.build_target == 'both' }}
+        run: |
+          echo "🔨 Memulai build Unsigned IPA untuk iPhone fisik..."
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/build-device \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO
+
+          mkdir -p artifacts Payload
+          cd ios/build-device/Build/Products/Release-iphoneos
+          APP_NAME=$(find . -maxdepth 1 -name "*.app" | head -n 1)
+          cp -r "$APP_NAME" "$GITHUB_WORKSPACE/Payload/"
+          cd "$GITHUB_WORKSPACE"
+          zip -r artifacts/bclinnk-cm-unsigned.ipa Payload
+          rm -rf Payload
+          echo "✅ Unsigned IPA build selesai: artifacts/bclinnk-cm-unsigned.ipa"
+
+      - name: 📤 Upload iOS Artifacts ke GitHub Actions
+        uses: actions/upload-artifact@v7
+        with:
+          name: bclinnk-ios-build
+          path: artifacts/*
+          retention-days: 14

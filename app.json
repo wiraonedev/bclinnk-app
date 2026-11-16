@@ -12,6 +12,18 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bclinnk.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aplikasi memerlukan akses kamera untuk mengunggah dokumen atau bukti reservasi.",
+        "NSPhotoLibraryUsageDescription": "Aplikasi memerlukan akses galeri untuk memilih foto atau dokumen bukti transaksi.",
+        "NSPhotoLibraryAddUsageDescription": "Aplikasi memerlukan izin menyimpan berkas atau bukti reservasi ke galeri.",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

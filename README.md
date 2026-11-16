@@ -1,17 +1,50 @@
-# Bclinnk CM - Android WebView App (React Native)
+# Bclinnk CM - Mobile WebView App (Android & iOS)
 
-Aplikasi Android WebView wrapper berbasis React Native & Expo untuk portal **Bclinnk Channel Manager (Extranet)** (`https://cm.bclinnk.com/`).
+Aplikasi mobile WebView wrapper berbasis React Native & Expo untuk portal **Bclinnk Channel Manager (Extranet)** (`https://cm.bclinnk.com/`).
 
-Aplikasi ini dirancang khusus untuk operasional staf dan pengelola hotel/properti:
+Aplikasi ini dirancang khusus untuk operasional staf dan pengelola hotel/properti di platform **Android** dan **iOS**:
 - **Target Portal**: `https://cm.bclinnk.com/` (Channel Manager & Operasional Kamar).
 - **Persistent Session & Caching**: Sesi login dan cookies disimpan secara persisten sehingga pengguna tidak perlu login berulang kali setiap membuka aplikasi.
-- **Dukungan Unduh Laporan**: Link ekspor laporan (Excel, PDF, CSV) otomatis dialihkan ke Download Manager native Android.
-- **Dukungan Unggah Berkas & Kamera**: Mendukung `<input type="file">` untuk unggah foto properti atau dokumen dengan izin kamera dan penyimpanan Android.
-- **In-App Browser (Chrome Custom Tabs)** untuk membuka tautan eksternal (OTA eksternal, WhatsApp, portal bank) tanpa menutup aplikasi.
+- **Dukungan Unduh Laporan**: Link ekspor laporan (Excel, PDF, CSV) otomatis dialihkan ke Download Manager native.
+- **Dukungan Unggah Berkas & Kamera**: Mendukung `<input type="file">` untuk unggah foto properti atau dokumen dengan izin kamera dan penyimpanan Android & iOS.
+- **In-App Browser**: Membuka tautan eksternal (OTA eksternal, WhatsApp, portal bank) tanpa menutup aplikasi.
 - **Android Back Button**: Navigasi mundur riwayat WebView dan proteksi double-tap untuk keluar aplikasi.
 - **Resilience & Offline Screen**: Tampilan offline yang ramah pengguna dengan tombol Coba Lagi jika koneksi internet terputus.
-- **Hybrid Push Notification (`expo-notifications`)**: Mendukung notifikasi Android native via WebView JS Bridge (`window.BclinnkNative.notify`), polyfill otomatis HTML5 `new Notification()`, Deep Navigation saat notifikasi di-tap, serta siap dihubungkan ke Firebase Cloud Messaging (`google-services.json`).
-- **100% Free Cloud Build**: Dibuat langsung menjadi file `.apk` standalone yang siap di-install (*sideload*) melalui GitHub Actions tanpa butuh Android Studio lokal.
+- **Hybrid Push Notification (`expo-notifications`)**: Mendukung notifikasi native via WebView JS Bridge (`window.BclinnkNative.notify`), polyfill otomatis HTML5 `new Notification()`, Deep Navigation saat notifikasi di-tap, serta siap dihubungkan ke Firebase Cloud Messaging.
+- **100% Free Cloud Build**: Dibuat langsung di cloud GitHub Actions secara gratis tanpa membutuhkan Mac atau Android Studio di komputer lokal.
+
+---
+
+## 🛠️ Pilihan Workflow Build di GitHub Actions
+
+| Workflow | File YAML | Output Format | Kegunaan Utama |
+| :--- | :--- | :--- | :--- |
+| **Build Android APK** | `build-apk.yml` | `.apk` | Pengujian langsung / instalasi manual di HP Android (*unknown source / sideloading*). |
+| **Build Android App Bundle** | `build-aab.yml` | `.aab` | Format resmi wajib Google Play Store (*Internal Testing / Production*). |
+| **Build iOS App** | `build-ios.yml` | `.app.zip` / `.ipa` | **100% Gratis**: Simulator build (`.zip`) untuk Mac/Simulator dan Unsigned `.ipa` untuk iPhone fisik via Sideloadly. |
+
+---
+
+## 🍏 Panduan Build iOS Gratis di GitHub Actions
+
+Anda tidak membutuhkan komputer Mac untuk mem-build aplikasi iOS. Cukup gunakan runner `macos-14` gratis di GitHub Actions:
+
+### 1. Menjalankan Build iOS
+1. Buka repositori Anda di browser: [https://github.com/wiraonedev/bclinnk-app/actions](https://github.com/wiraonedev/bclinnk-app/actions).
+2. Di panel sebelah kiri, pilih workflow **"Build iOS App"**.
+3. Klik tombol dropdown **Run workflow** di sebelah kanan.
+4. Pilih target build:
+   - `both` (Default): Menghasilkan Simulator `.app.zip` dan Device `.ipa` sekaligus.
+   - `simulator`: Menghasilkan berkas Simulator untuk Mac / web testing.
+   - `device-ipa`: Menghasilkan berkas Unsigned `.ipa` untuk dipasang ke iPhone fisik.
+5. Klik tombol hijau **Run workflow** dan tunggu proses selesai (~6–9 menit).
+
+### 2. Memasang ke iPhone Fisik (Tanpa Bayar Apple Developer)
+1. Unduh artifact **`bclinnk-ios-build`** dari halaman run workflow.
+2. Di dalamnya terdapat file **`bclinnk-cm-unsigned.ipa`**.
+3. Unduh software gratis [Sideloadly](https://sideloadly.io/) atau AltStore di PC/Mac Anda.
+4. Hubungkan iPhone ke komputer via kabel USB, buka Sideloadly, seret file `bclinnk-cm-unsigned.ipa`, masukkan Apple ID gratis Anda, lalu klik **Start**.
+5. Di iPhone, buka *Settings > General > VPN & Device Management*, lalu percayai (*Trust*) akun pengembang Anda. Aplikasi Bclinnk CM siap dibuka!
 
 ---
 
@@ -28,50 +61,20 @@ window.BclinnkNative.notify(
   { url: 'https://cm.bclinnk.com/' } // Opsional: URL tujuan saat notifikasi di-tap
 );
 
-// Cara B: Menggunakan standar HTML5 Web Notification (otomatis di-polyfill ke Android Native)
+// Cara B: Menggunakan standar HTML5 Web Notification (otomatis di-polyfill ke Native)
 new Notification('Booking Baru #INV-001', {
   body: 'Tamu: Budi Santoso (2 Malam)',
   data: { url: 'https://cm.bclinnk.com/' }
 });
 ```
 
-### 2. Mengaktifkan Remote FCM (Saat Aplikasi Ditutup Total)
-Secara default, build GitHub Actions tetap berjalan lancar meskipun belum ada file `google-services.json`. Jika tim backend siap mengirim Remote Push via Firebase:
-1. Buat project di [Firebase Console](https://console.firebase.google.com/) dan daftarkan aplikasi Android dengan package ID **`com.bclinnk.app`**.
-2. Unduh file **`google-services.json`** dan letakkan di folder utama (root) repositori ini.
-3. File [`app.config.js`](file:///Users/raiwirawan/Desktop/MAGANG_BC_SOLUTIONS_2026/WEBSITE_DEVELOPMENT/November/01-11-2026-membuat-aplikasi-android-bclinnk/app.config.js) akan otomatis mendeteksinya saat proses build.
-4. Di sisi web `cm.bclinnk.com`, ambil token perangkat menggunakan `window.BclinnkNative.getPushToken()` untuk disimpan ke database user hotel.
-
 ---
 
-## 🚀 Panduan Build APK Gratis Menggunakan GitHub Actions
+## 🚀 Panduan Build APK & AAB Android
 
-Anda tidak perlu menginstall Android Studio atau SDK di laptop. Cukup manfaatkan GitHub Actions (gratis & unlimited untuk public repo):
-
-### Langkah 1: Buat Git Repository & Push ke GitHub
-```bash
-git init
-git add .
-git commit -m "feat: initial commit base project bclinnk webview"
-git branch -M main
-git remote add origin https://github.com/<USERNAME-ANDA>/<NAMA-REPO-ANDA>.git
-git push -u origin main
-```
-
-### Langkah 2: Jalankan Build APK di GitHub
-1. Buka repository Anda di browser GitHub.
-2. Klik tab **Actions** di bagian atas.
-3. Di sisi kiri, klik workflow **"Build Android APK"**.
-4. Klik tombol dropdown **Run workflow** (di sebelah kanan).
-5. Pilih branch `main` dan pilih jenis APK (`debug` untuk testing instan tanpa sign, atau `release`).
-6. Klik tombol hijau **Run workflow**.
-
-### Langkah 3: Unduh File APK
-1. Tunggu proses build selesai (~5-8 menit).
-2. Klik pada hasil eksekusi workflow yang telah bercentang hijau.
-3. Gulir ke bawah ke bagian **Artifacts**.
-4. Klik **`bclinnk-android-apk`** untuk mengunduh file `.zip` yang berisi file `.apk`.
-5. Ekstrak zip tersebut dan kirimkan file `.apk` ke HP Android Anda untuk diinstall!
+1. Buka tab **Actions** di repositori GitHub.
+2. Pilih **"Build Android APK"** (untuk `.apk`) atau **"Build Android App Bundle (.aab)"** (untuk Google Play Store).
+3. Klik **Run workflow**, tunggu selesai, lalu unduh hasilnya dari bagian **Artifacts**.
 
 ---
 
@@ -79,11 +82,11 @@ git push -u origin main
 
 Aplikasi ini dirancang modular. Jika Anda ingin mengarahkan WebView ke properti lain atau halaman utama portal Bclinnk:
 1. Buka file [`src/config/appConfig.ts`](file:///Users/raiwirawan/Desktop/MAGANG_BC_SOLUTIONS_2026/WEBSITE_DEVELOPMENT/November/01-11-2026-membuat-aplikasi-android-bclinnk/src/config/appConfig.ts).
-2. Ubah baris `initialUrl`:
+2. Ubah properti `initialUrl`:
    ```typescript
    export const APP_CONFIG = {
-     appName: 'Bclinnk',
-     initialUrl: 'https://booking.bclinnk.com/booking-group2.php?id=bali-cabin', // Ganti dengan URL baru
+     appName: 'Bclinnk CM',
+     initialUrl: 'https://cm.bclinnk.com/', // Ganti dengan URL baru
      // ...
    };
    ```
@@ -95,7 +98,9 @@ Aplikasi ini dirancang modular. Jika Anda ingin mengarahkan WebView ke properti 
 ```
 ├── .github/
 │   └── workflows/
-│       └── build-apk.yml        # CI/CD otomatisasi build APK Android
+│       ├── build-apk.yml        # CI/CD Build APK Android (Testing/Unknown sources)
+│       ├── build-aab.yml        # CI/CD Build AAB Android (Google Play Store)
+│       └── build-ios.yml        # CI/CD Build iOS (Simulator .zip & Unsigned .ipa)
 ├── assets/                      # Icon, Splash Screen, Adaptive Icon
 ├── src/
 │   ├── components/
@@ -106,9 +111,12 @@ Aplikasi ini dirancang modular. Jika Anda ingin mengarahkan WebView ke properti 
 │   │   └── appConfig.ts         # Konfigurasi URL dan tema
 │   ├── hooks/
 │   │   ├── useBackButton.ts     # Penanganan tombol Back Android
+│   │   └── useNotifications.ts  # Penanganan Push Notification & Deep Link
 │   └── utils/
-│       └── urlHandler.ts        # Klasifikasi link internal, eksternal, & deep link
+│       ├── urlHandler.ts        # Klasifikasi link internal, eksternal, & deep link
+│       └── webViewBridge.ts     # Jembatan komunikasi WebView <-> Native
 ├── App.tsx                      # Entry point React Native
-├── app.json                     # Konfigurasi package ID (com.bclinnk.app) & Expo
+├── app.config.js                # Konfigurasi dinamis Expo (Android & iOS Firebase auto-detect)
+├── app.json                     # Konfigurasi package ID (com.bclinnk.app) & infoPlist iOS
 └── package.json
 ```
