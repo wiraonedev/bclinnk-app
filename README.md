@@ -27,7 +27,7 @@ Aplikasi ini dirancang khusus untuk operasional staf dan pengelola hotel/propert
 
 ## 🍏 Panduan Build iOS Gratis di GitHub Actions
 
-Anda tidak membutuhkan komputer Mac untuk mem-build aplikasi iOS. Cukup gunakan runner `macos-14` gratis di GitHub Actions:
+Anda tidak membutuhkan komputer Mac untuk mem-build aplikasi iOS. Cukup gunakan runner `macos-15` (Sequoia / Apple Silicon M1/M2) gratis di GitHub Actions:
 
 ### 1. Menjalankan Build iOS
 1. Buka repositori Anda di browser: [https://github.com/wiraonedev/bclinnk-app/actions](https://github.com/wiraonedev/bclinnk-app/actions).
